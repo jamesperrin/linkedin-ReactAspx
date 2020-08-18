@@ -66,29 +66,32 @@ namespace ReactAspx.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Login(LoginViewModel model, string returnUrl)
+        public async Task<ActionResult> Login(Customer user)
         {
-            if (!ModelState.IsValid)
+            using (var db = new AppDbContext())
             {
-                return View(model);
-            }
+                Customer usr = db.Customers
+                    .Where(u => u.Email == user.Email && u.Password == user.Password)
+                    .FirstOrDefault();
 
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
-            switch (result)
-            {
-                case SignInStatus.Success:
-                    return RedirectToLocal(returnUrl);
-                case SignInStatus.LockedOut:
-                    return View("Lockout");
-                case SignInStatus.RequiresVerification:
-                    return RedirectToAction("SendCode", new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
-                case SignInStatus.Failure:
-                default:
-                    ModelState.AddModelError("", "Invalid login attempt.");
-                    return View(model);
+                if (usr != null)
+                {
+                    Session["Email"] = usr.Email;
+                    Session["UserId"] = usr.Id;
+                    ViewBag.Email = usr.Email;
+                    ViewBag.UserId = usr.Id;
+                    return RedirectToAction("Index", "Home");
+                }
+                else
+                {
+                    ViewBag.ErrorMsg = "Login failed!";
+                    Session["Email"] = null;
+                    Session["UserId"] = null;
+                    ViewBag.Email = string.Empty;
+                    ViewBag.UserId = "-1";
+                }
             }
+            return View();
         }
 
         //
@@ -387,10 +390,14 @@ namespace ReactAspx.Controllers
         //
         // POST: /Account/LogOff
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
+        [AllowAnonymous]
         public ActionResult LogOff()
         {
-            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+            Session["Email"] = null;
+            Session["UserId"] = null;
+            ViewBag.UserId = "-1";
+
             return RedirectToAction("Index", "Home");
         }
 
