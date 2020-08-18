@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ReactAspx.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -10,6 +11,10 @@ namespace ReactAspx.Controllers
     {
         public ActionResult Index()
         {
+            //AppDbContext c = new AppDbContext();            
+            // Use if Database already exists and you need to build the tables
+            //c.Database.Initialize(true);
+            //c.Database.CreateIfNotExists();
             return View();
         }
 
